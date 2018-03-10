@@ -9,34 +9,35 @@ class TestRandomNumberGenerator(unittest.TestCase):
 
 	def test_invalid_cdf(self):
 		self.invalid_number_generator.set_cdf(None)
-		res, message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertEqual(message, "Cdf must be non-empty list of tuples")
+		res = {}
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertEqual(message, "Cdf must be non-empty list of tuples")
 
 		self.invalid_number_generator.set_cdf([(1,0.4), [2,0.6], (2, 0.6, "asd"), (2, 0.6)])
-		res,message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertIn("Cdf is invalid.",message)
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertIn("Cdf is invalid.",message)
 
 		self.invalid_number_generator.set_cdf([(1,0.4), (2, 0.6, "asd"), (2, 0.6)])
-		res,message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertIn("Cdf is invalid.",message)
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertIn("Cdf is invalid.",message)
 
 		self.invalid_number_generator.set_cdf([(1,0.4), (2, 1.6)])
-		res,message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertIn("Cdf is invalid.",message)
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertIn("Cdf is invalid.",message)
 
 		self.invalid_number_generator.set_cdf([(1,0.4), (2, 0.6)])
-		res,message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertIn("Cdf is invalid.",message)
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertIn("Cdf is invalid.",message)
 
 		self.invalid_number_generator.set_cdf([(1,0.4), (2, 0.3)])
-		res,message = self.invalid_number_generator.generate_numbers_by_distribution()
-		self.assertEqual(res, None)
-		self.assertIn("Cdf is invalid.",message)
+		self.invalid_number_generator.generate_numbers_by_distribution(res, 0)
+		self.assertEqual(res[0], False)
+		#self.assertIn("Cdf is invalid.",message)
 
 	def test_invalid_maxlength(self):
 		self.assertEqual(self.invalid_number_generator.queue_maxlength, None)
@@ -44,7 +45,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 	def test_valid_numbers(self):
 		occurrence_dict = {1:0, 2:0, 3:0, 4:0, 5:0}
 		for i in xrange(0,generator.MAX):
-			res, message = self.number_generator.generate_numbers_by_distribution()
+			res = self.number_generator.generate_numbers_by_distribution()
 			occurrence_dict[res] += 1
 			self.assertLess(res,6)
 			self.assertGreater(res, 0)
@@ -61,7 +62,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 
 		queue = deque([], generator.MAX)
 		for i in xrange(0,generator.MAX * 2):
-			res, message = self.number_generator.generate_numbers_by_distribution()
+			res = self.number_generator.generate_numbers_by_distribution()
 			queue.append(res)
 
 		self.assertEqual(self.number_generator.queue_length, generator.MAX)
@@ -91,7 +92,8 @@ class TestRandomNumberGenerator(unittest.TestCase):
 		for i in xrange(0,generator.MAX):
 			self.number_generator.generate_numbers_by_distribution()
 		
-		result = self.number_generator.run_writer(3453)
+		result = self.number_generator.run_writer(1, 3453)
+		print result
 		sleep(1)
 		self.assertEqual(result[0], False)
 
@@ -100,7 +102,8 @@ class TestRandomNumberGenerator(unittest.TestCase):
 			self.number_generator.generate_numbers_by_distribution()
 		filepath = "testfile.txt"
 		start = time()
-		result = self.number_generator.run_writer(filepath)
+		result = self.number_generator.run_writer(1,filepath,"w")
+		print result
 		sleep(1)
 		self.assertEqual(result[0], True)
 
