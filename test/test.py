@@ -49,7 +49,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 			self.assertLess(res,6)
 			self.assertGreater(res, 0)
 
-		res, message = self.number_generator.get_frequency_percentages()
+		res = self.number_generator.get_frequency_percentages()
 		self.assertEqual(sorted(res.keys()), sorted(occurrence_dict.keys()))
 
 		f = float(generator.MAX)
@@ -70,7 +70,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 		for e in queue:
 			occurrence_dict[e] += 1
 
-		res, message = self.number_generator.get_frequency_percentages()
+		res = self.number_generator.get_frequency_percentages()
 		f = float(generator.MAX)
 		for k in occurrence_dict.keys():
 			self.assertEqual((occurrence_dict[k] / f)*100, res[k])
@@ -107,6 +107,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 		fp = open(filepath, 'r')
 		line = fp.readline().strip()
 		number, written_time = line.split(',')
+		fp.close()
 		self.assertEqual(int(number), self.number_generator._queue[-1][0])
 		self.assertEqual(float(written_time), self.number_generator._queue[-1][1])
 		self.assertGreaterEqual(written_time, start)
