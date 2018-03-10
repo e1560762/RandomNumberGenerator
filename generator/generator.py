@@ -188,7 +188,15 @@ class NumberGenerator(object):
 			fout.write("%d,%f\n" % (value, time))
 			result_dict[identifier] = True
 
-	def _run(self, iterations, result_dict, number_of_threads=1, method=None, is_deamon=False, *args):
+	@staticmethod
+	def looper(itr, method, **wargs):
+		if itr <= 0:
+			while True:
+				method(**wargs)
+		else:
+			for _ in xrange(0, itr):
+				method(**wargs)
+	def _run(self, iterations, result_dict, number_of_threads=1, method=None, is_deamon=False, **args):
 		'''
 		A generic method that calls relevant method from class. Stores the return values 
 		inside a dictionary for debugging purpose.
@@ -203,16 +211,10 @@ class NumberGenerator(object):
 		try:
 			method = getattr(self, method)
 			if method and number_of_threads > 0:
-				def looper(method, *bargs):
-					if iterations <= 0:
-						while True:
-							method(bargs)
-					else:
-						for _ in xrange(0, iterations):
-							method(bargs)
-
 				for i in xrange(0, number_of_threads):
-					t = threading.Thread(target=looper(method), args=(result_dict, i) + args)
+					d = {"itr":iterations, "method":method, "result_dict":result_dict, "identifier":i}
+					d = dict(d, **args)
+					t = threading.Thread(target=self.looper, kwargs=d)
 					t_list.append(t)
 					t.deamon = is_deamon
 					t.start()
@@ -230,7 +232,7 @@ class NumberGenerator(object):
 		:mode String. File mode for writing, it can not be given as 'r'
 		'''
 		result = {}
-		l = self._run(iterations, result, 1, "save_last_generated_number", True, filepath, mode)
+		l = self._run(iterations, result, 1, "save_last_generated_number", True, **{"filepath":filepath, "mode":mode})
 		return result
 
 	def run_generator(self, iterations):
