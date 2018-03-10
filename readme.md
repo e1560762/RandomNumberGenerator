@@ -28,9 +28,9 @@ python run.py -g <number_of_iterations_for_generator> -w <number_of_iterations_f
 * Computes the percentages of frequencies of the generated numbers (up to last 100) at any state.
 * Both generators and writers can run concurrently.
 
-##Configuration
+## Configuration
 
-###Parameters
+### Parameters
 -g : Integer. Sets number of iterations for generator. If it is less than 1, then the program runs in an infinite loop. Default value is 0. 
 -w : Integer. Sets number of iterations for writer. If it is less than 1, then the program runs in an infinite loop. Default value is 0.
 -f : String. Sets the path to file to write most recently generated number. Default value is output.txt
