@@ -156,8 +156,8 @@ class NumberGenerator(object):
 					if l == ml:
 						self._frequencies[self._queue[0][0]] -= 1
 					self._queue.append((gen, time()))
-					self.mutex.release()
 					self._frequencies[gen] += 1
+					self.mutex.release()
 					result_dict[identifier] = True
 					return gen
 		else:
@@ -170,8 +170,10 @@ class NumberGenerator(object):
 		if self.isvalid:
 			queue_len = float(self.queue_length)
 			try:
+				self.mutex.acquire()
 				for k,v in self._frequencies.iteritems():
 					self._frequency_percentages[k] = (v / queue_len) * 100
+				self.mutex.release()
 				return self._frequency_percentages
 			except ZeroDivisionError:
 				logging.error("Zero division error: {0}".format(queue_len))
