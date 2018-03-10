@@ -2,9 +2,12 @@ from collections import deque
 from random import uniform
 from time import time
 import threading
+import logging
 
 CDF = [(1, 0.5), (2, 0.75), (3, 0.9), (4, 0.95), (5, 1)]
 MAX = 100
+logging.basicConfig(filename='numbergenerator.log',level=logging.WARNING)
+
 class NumberGenerator(object):
 	def __init__(self, cdfs=CDF, maxlen=MAX):
 		self.set_cdf(cdfs)
@@ -69,6 +72,7 @@ class NumberGenerator(object):
 
 		if self.isvalid:
 			self._cdfs = cdf
+			logging.error("{0}:{1}".format(self.message, cdf))
 		else:
 			self._cdfs = []
 
@@ -93,15 +97,18 @@ class NumberGenerator(object):
 		Returns boolean that indicates validness of parameter
 		'''
 		if not isinstance(maxlen, int):
+			logging.error("Maximum length is not valid: {0}".format(maxlen))
 			return False
 		else:
 			if maxlen < 1:
+				logging.error("Maximum length is not valid: {0}".format(maxlen))
 				return False
 			else:
 				return True
 
 	def _validate_filepath(self, path):
 		if not isinstance(path, str):
+			logging.error("Path is not valid: {0}".format(path))
 			return False
 		else:
 			return True
@@ -150,11 +157,12 @@ class NumberGenerator(object):
 			try:
 				for k,v in self._frequencies.iteritems():
 					self._frequency_percentages[k] = (v / queue_len) * 100
-				return self._frequency_percentages, None
+				return self._frequency_percentages
 			except ZeroDivisionError:
-				return None, "Zero division error"
+				logging.error("Zero division error: {0}".format(queue_len))
+				return None
 		else:
-			return None, self.message
+			return None
 
 	def save_last_generated_number(self, result_dict, identifier, filepath="lastgeneratednumber.txt", mode="w"):
 		'''
@@ -200,8 +208,8 @@ class NumberGenerator(object):
 				if not is_deamon:
 					for t in t_list:
 						t.join()
-		except:
-			pass
+		except Exception, e:
+			logging.error(str(e))
 		return t_list
 
 	def run_writer(self, filepath="lastgeneratednumber.txt", mode="w"):
