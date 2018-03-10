@@ -1,6 +1,7 @@
 from collections import deque
 from random import uniform
 from time import time
+import threading
 
 CDF = [(1, 0.5), (2, 0.75), (3, 0.9), (4, 0.95), (5, 1)]
 MAX = 100
@@ -8,7 +9,7 @@ class NumberGenerator(object):
 	def __init__(self, cdfs=CDF, maxlen=MAX):
 		self.set_cdf(cdfs)
 		self.initialize_queue(maxlen)
-
+		self.mutex = threading.Lock()
 		self._frequencies = {}
 		self._frequency_percentages = {}
 		for val, prob in self._cdfs:
@@ -21,7 +22,10 @@ class NumberGenerator(object):
 
 	@property
 	def queue_length(self):
-		return len(self._queue)
+		self.mutex.acquire()
+		l = len(self._queue)
+		self.mutex.release()
+		return l
 
 	def _validate_cdf(self, cdf):
 		'''
@@ -126,9 +130,12 @@ class NumberGenerator(object):
 			n = self._round_random_number(uniform(0,1))
 			for gen, cdf_val in self._cdfs:
 				if n == cdf_val:
-					if self.queue_length == self.queue_maxlength:
-						self._frequencies[self._queue[0]] -= 1
-					self._queue.append(gen)
+					l = self.queue_length
+					self.mutex.acquire()
+					if l == self.queue_maxlength:
+						self._frequencies[self._queue[0][0]] -= 1
+					self._queue.append((gen, time()))
+					self.mutex.release()
 					self._frequencies[gen] += 1
 					return gen, None
 		else:
@@ -149,14 +156,60 @@ class NumberGenerator(object):
 		else:
 			return None, self.message
 
-	def save_last_generated_number(self, filepath="lastgeneratednumber.txt", mode="w"):
+	def save_last_generated_number(self, result_dict, identifier, filepath="lastgeneratednumber.txt", mode="w"):
 		'''
 		Writes last generated number to a file.
 
-		:filepath Path of the file. Should be string.
+		:result_dict Dictionary. A mutable object in order to keep the response from thread
+		:identifier Integer. Indicates the index of the thread
+		:filepath String. Path of the file.
+		:mode String. File mode for writing, it can not be given as 'r'
 		'''
 		if not self._validate_filepath(filepath):
-			return False
-		with open(filepath, mode) as fout:
-			fout.write("%d,%f\n" % (self._queue[-1], time()))
-		return True
+			result_dict[identifier] = False
+			return
+
+		while True:
+			with open(filepath, mode) as fout:
+				self.mutex.acquire()
+				value, time = self._queue[-1]
+				self.mutex.release()
+				fout.write("%d,%f\n" % (value, time))
+				result_dict[identifier] = True
+
+	def _run(self, result_dict, number_of_threads=1, method=None, is_deamon=False, *args):
+		'''
+		A generic method that calls relevant method from class. Stores the return values 
+		inside a dictionary for debugging purpose.
+
+		:result_dict Dictionary. A mutable object in order to keep the response from thread
+		:number_of_threads Integer. Indicates number of threads to be created
+		:method String. The method that is supposed to be called from the inside of the class
+		:is_deamon Boolean. Determines whether created threads will be run as deamon
+		:args Arguments for related method
+		'''
+		t_list = []
+		try:
+			method = getattr(self, method)
+			if method and number_of_threads > 0:
+				for i in xrange(0, number_of_threads):
+					t = threading.Thread(target=method, args=(result_dict, i) + args)
+					t_list.append(t)
+					t.deamon = is_deamon
+					t.start()
+				if not is_deamon:
+					for t in t_list:
+						t.join()
+		except:
+			pass
+		return t_list
+
+	def run_writer(self, filepath="lastgeneratednumber.txt", mode="w"):
+		'''
+		Runs save_last_generated_number method as a separated thread
+		:filepath String. Path of the file.
+		:mode String. File mode for writing, it can not be given as 'r'
+		'''
+		result = {}
+		l = self._run(result, 1, "save_last_generated_number", True, filepath, mode)
+		return result
