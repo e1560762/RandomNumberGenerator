@@ -133,7 +133,7 @@ class NumberGenerator(object):
 		:cdf List of tuples. Restrictions are explained in _validate_cdf function.
 		Returns tuple. Generated number and none if cdf is valid, otherwise None and error message
 		'''
-		if not result_dict:
+		if result_dict is None:
 			result_dict = {}
 
 		if self.isvalid:
@@ -231,4 +231,14 @@ class NumberGenerator(object):
 		'''
 		result = {}
 		l = self._run(iterations, result, 1, "save_last_generated_number", True, filepath, mode)
+		return result
+
+	def run_generator(self, iterations):
+		'''
+		Runs save_last_generated_number method as a separated thread
+		:filepath String. Path of the file.
+		:mode String. File mode for writing, it can not be given as 'r'
+		'''
+		result = {}
+		l = self._run(iterations, result, 5, "generate_numbers_by_distribution", False)
 		return result
