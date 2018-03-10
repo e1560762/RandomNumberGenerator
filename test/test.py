@@ -1,5 +1,6 @@
 import unittest
 from generator import generator
+from time import time, sleep
 
 class TestRandomNumberGenerator(unittest.TestCase):
 	def setUp(self):
@@ -90,19 +91,24 @@ class TestRandomNumberGenerator(unittest.TestCase):
 		for i in xrange(0,generator.MAX):
 			self.number_generator.generate_numbers_by_distribution()
 		
-		self.assertEqual(self.number_generator.save_last_generated_number(3453), False)
+		result = self.number_generator.run_writer(3453)
+		sleep(1)
+		self.assertEqual(result[0], False)
 
 	def test_valid_write_to_file(self):
-		from time import time
 		for i in xrange(0,generator.MAX * 2):
 			self.number_generator.generate_numbers_by_distribution()
 		filepath = "testfile.txt"
 		start = time()
-		self.assertEqual(self.number_generator.save_last_generated_number(filepath), True)
+		result = self.number_generator.run_writer(filepath)
+		sleep(1)
+		self.assertEqual(result[0], True)
+
 		fp = open(filepath, 'r')
 		line = fp.readline().strip()
 		number, written_time = line.split(',')
-		self.assertEqual(int(number), self.number_generator._queue[-1])
+		self.assertEqual(int(number), self.number_generator._queue[-1][0])
+		self.assertEqual(float(written_time), self.number_generator._queue[-1][1])
 		self.assertGreaterEqual(written_time, start)
 
 def main():
