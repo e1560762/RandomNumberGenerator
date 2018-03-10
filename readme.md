@@ -31,7 +31,7 @@ python run.py -g <number_of_iterations_for_generator> -w <number_of_iterations_f
 ## Configuration
 
 ### Parameters
--g : Integer. Sets number of iterations for generator. If it is less than 1, then the program runs in an infinite loop. Default value is 0. 
--w : Integer. Sets number of iterations for writer. If it is less than 1, then the program runs in an infinite loop. Default value is 0.
--f : String. Sets the path to file to write most recently generated number. Default value is output.txt
--m : String. Sets file mode given with -f parameter. It can be either 'w' or 'a'. Default value is 'w'
+* -g : Integer. Sets number of iterations for generator. If it is less than 1, then the program runs in an infinite loop. Default value is 0. 
+* -w : Integer. Sets number of iterations for writer. If it is less than 1, then the program runs in an infinite loop. Default value is 0.
+* -f : String. Sets the path to file to write most recently generated number. Default value is output.txt
+* -m : String. Sets file mode given with -f parameter. It can be either 'w' or 'a'. Default value is 'w'
