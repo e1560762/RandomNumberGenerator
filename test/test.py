@@ -93,7 +93,6 @@ class TestRandomNumberGenerator(unittest.TestCase):
 			self.number_generator.generate_numbers_by_distribution()
 		
 		result = self.number_generator.run_writer(1, 3453)
-		print result
 		sleep(1)
 		self.assertEqual(result[0], False)
 
@@ -102,8 +101,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 			self.number_generator.generate_numbers_by_distribution()
 		filepath = "testfile.txt"
 		start = time()
-		result = self.number_generator.run_writer(1,filepath,"w")
-		print result
+		result = self.number_generator.run_writer(1,filepath)
 		sleep(1)
 		self.assertEqual(result[0], True)
 
