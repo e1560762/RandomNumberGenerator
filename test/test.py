@@ -86,8 +86,24 @@ class TestRandomNumberGenerator(unittest.TestCase):
 				self.assertGreater(n, d[i-1])
 				self.assertLessEqual(n, m)
 
+	def test_invalid_write_to_file(self):
+		for i in xrange(0,generator.MAX):
+			self.number_generator.generate_numbers_by_distribution()
+		
+		self.assertEqual(self.number_generator.save_last_generated_number(3453), False)
 
-
+	def test_valid_write_to_file(self):
+		from time import time
+		for i in xrange(0,generator.MAX * 2):
+			self.number_generator.generate_numbers_by_distribution()
+		filepath = "testfile.txt"
+		start = time()
+		self.assertEqual(self.number_generator.save_last_generated_number(filepath), True)
+		fp = open(filepath, 'r')
+		line = fp.readline().strip()
+		number, written_time = line.split(',')
+		self.assertEqual(int(number), self.number_generator._queue[-1])
+		self.assertGreaterEqual(written_time, start)
 
 def main():
 	suite = unittest.TestLoader().loadTestsFromTestCase(TestRandomNumberGenerator)
