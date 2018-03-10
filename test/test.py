@@ -97,8 +97,7 @@ class TestRandomNumberGenerator(unittest.TestCase):
 		self.assertEqual(result[0], False)
 
 	def test_valid_write_to_file(self):
-		for i in xrange(0,generator.MAX * 2):
-			self.number_generator.generate_numbers_by_distribution()
+		self.number_generator.run_generator(2)
 		filepath = "testfile.txt"
 		start = time()
 		result = self.number_generator.run_writer(1,filepath)
