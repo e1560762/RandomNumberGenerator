@@ -21,7 +21,10 @@ class NumberGenerator(object):
 
 	@property
 	def queue_maxlength(self):
-		return self._queue.maxlen
+		self.mutex.acquire()
+		ml = self._queue.maxlen
+		self.mutex.release()
+		return ml
 
 	@property
 	def queue_length(self):
@@ -66,7 +69,7 @@ class NumberGenerator(object):
 	def set_cdf(self, cdf):
 		'''
 		Updates cumulative distribution list. Validates the list before assignment.
-		:cdf : List of tuples. Restrictions are explained in _validate_cdf function
+		:cdf : List of tuples. Restrictions are explained in :_validate_cdf function
 		'''
 		self.isvalid, self.message = self._validate_cdf(cdf)
 
@@ -107,6 +110,12 @@ class NumberGenerator(object):
 				return True
 
 	def _validate_filepath(self, path):
+		'''
+		Checks data type of path parameter that is supposed to keep recently generated numbers.
+
+		:path : String. Path to file.
+		Returns false if the argument is not a string instance, otherwise true. 
+		'''
 		if not isinstance(path, str):
 			logging.error("Path is not valid: {0}".format(path))
 			return False
@@ -118,7 +127,7 @@ class NumberGenerator(object):
 		Rounds n to the corresponding probility
 		
 		:n Uniformly generated number. It is guaranteed to be between 0 and 1.
-		Returns nearest  
+		Returns nearest probility in :self._cdfs
 		'''
 		cumulative_distributions = map(lambda x:x[1], self._cdfs)
 		for i in cumulative_distributions:
@@ -133,6 +142,7 @@ class NumberGenerator(object):
 		:cdf List of tuples. Restrictions are explained in _validate_cdf function.
 		Returns tuple. Generated number and none if cdf is valid, otherwise None and error message
 		'''
+
 		if result_dict is None:
 			result_dict = {}
 
@@ -141,8 +151,9 @@ class NumberGenerator(object):
 			for gen, cdf_val in self._cdfs:
 				if n == cdf_val:
 					l = self.queue_length
+					ml = self.queue_maxlength
 					self.mutex.acquire()
-					if l == self.queue_maxlength:
+					if l == ml:
 						self._frequencies[self._queue[0][0]] -= 1
 					self._queue.append((gen, time()))
 					self.mutex.release()
@@ -186,16 +197,27 @@ class NumberGenerator(object):
 			value, time = self._queue[-1]
 			self.mutex.release()
 			fout.write("%d,%f\n" % (value, time))
-			result_dict[identifier] = True
+		result_dict[identifier] = True
 
 	@staticmethod
 	def looper(itr, method, **wargs):
+		'''
+		Calls the method given number of iterations, :itr. If itr is less than 1,
+		then the method is called infinite times.
+
+		:itr Integer. Indicates number of iterations.
+		:method Instance object. Method to be run.
+		:**wargs Keyword arguments that :method is required
+		'''
+		if not isinstance(itr, int):
+			return None
 		if itr <= 0:
 			while True:
 				method(**wargs)
 		else:
 			for _ in xrange(0, itr):
 				method(**wargs)
+
 	def _run(self, iterations, result_dict, number_of_threads=1, method=None, is_deamon=False, **args):
 		'''
 		A generic method that calls relevant method from class. Stores the return values 
@@ -218,9 +240,6 @@ class NumberGenerator(object):
 					t_list.append(t)
 					t.deamon = is_deamon
 					t.start()
-				if not is_deamon:
-					for t in t_list:
-						t.join()
 		except Exception, e:
 			logging.error(str(e))
 		return t_list
@@ -228,6 +247,8 @@ class NumberGenerator(object):
 	def run_writer(self, iterations, filepath="lastgeneratednumber.txt", mode="w"):
 		'''
 		Runs save_last_generated_number method as a separated thread
+		:iterations Integer. Number of times that the method will be run. If it is less than zero,
+					it runs in an infinite loop.
 		:filepath String. Path of the file.
 		:mode String. File mode for writing, it can not be given as 'r'
 		'''
@@ -237,7 +258,9 @@ class NumberGenerator(object):
 
 	def run_generator(self, iterations):
 		'''
-		Runs save_last_generated_number method as a separated thread
+		Runs save_last_generated_number method as five separated threads.
+		:iterations Integer. Number of times that the method will be run. If it is less than zero,
+					it runs in an infinite loop.
 		:filepath String. Path of the file.
 		:mode String. File mode for writing, it can not be given as 'r'
 		'''
