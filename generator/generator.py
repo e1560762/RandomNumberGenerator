@@ -125,7 +125,7 @@ class NumberGenerator(object):
 			if n <= i:
 				return i
 
-	def generate_numbers_by_distribution(self):
+	def generate_numbers_by_distribution(self, result_dict=None, identifier=0):
 		'''
 		If the operation ends successfully, it returns randomly generated number,
 		otherwise None with a message.
@@ -133,6 +133,9 @@ class NumberGenerator(object):
 		:cdf List of tuples. Restrictions are explained in _validate_cdf function.
 		Returns tuple. Generated number and none if cdf is valid, otherwise None and error message
 		'''
+		if not result_dict:
+			result_dict = {}
+
 		if self.isvalid:
 			n = self._round_random_number(uniform(0,1))
 			for gen, cdf_val in self._cdfs:
@@ -144,9 +147,10 @@ class NumberGenerator(object):
 					self._queue.append((gen, time()))
 					self.mutex.release()
 					self._frequencies[gen] += 1
-					return gen, None
+					result_dict[identifier] = True
+					return gen
 		else:
-			return None, self.message
+			result_dict[identifier] = False
 
 	def get_frequency_percentages(self):
 		'''
@@ -177,15 +181,14 @@ class NumberGenerator(object):
 			result_dict[identifier] = False
 			return
 
-		while True:
-			with open(filepath, mode) as fout:
-				self.mutex.acquire()
-				value, time = self._queue[-1]
-				self.mutex.release()
-				fout.write("%d,%f\n" % (value, time))
-				result_dict[identifier] = True
+		with open(filepath, mode) as fout:
+			self.mutex.acquire()
+			value, time = self._queue[-1]
+			self.mutex.release()
+			fout.write("%d,%f\n" % (value, time))
+			result_dict[identifier] = True
 
-	def _run(self, result_dict, number_of_threads=1, method=None, is_deamon=False, *args):
+	def _run(self, iterations, result_dict, number_of_threads=1, method=None, is_deamon=False, *args):
 		'''
 		A generic method that calls relevant method from class. Stores the return values 
 		inside a dictionary for debugging purpose.
@@ -200,8 +203,16 @@ class NumberGenerator(object):
 		try:
 			method = getattr(self, method)
 			if method and number_of_threads > 0:
+				def looper(method, *bargs):
+					if iterations <= 0:
+						while True:
+							method(bargs)
+					else:
+						for _ in xrange(0, iterations):
+							method(bargs)
+
 				for i in xrange(0, number_of_threads):
-					t = threading.Thread(target=method, args=(result_dict, i) + args)
+					t = threading.Thread(target=looper(method), args=(result_dict, i) + args)
 					t_list.append(t)
 					t.deamon = is_deamon
 					t.start()
@@ -212,12 +223,12 @@ class NumberGenerator(object):
 			logging.error(str(e))
 		return t_list
 
-	def run_writer(self, filepath="lastgeneratednumber.txt", mode="w"):
+	def run_writer(self, iterations, filepath="lastgeneratednumber.txt", mode="w"):
 		'''
 		Runs save_last_generated_number method as a separated thread
 		:filepath String. Path of the file.
 		:mode String. File mode for writing, it can not be given as 'r'
 		'''
 		result = {}
-		l = self._run(result, 1, "save_last_generated_number", True, filepath, mode)
+		l = self._run(iterations, result, 1, "save_last_generated_number", True, filepath, mode)
 		return result
