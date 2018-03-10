@@ -1,5 +1,6 @@
 from collections import deque
 from random import uniform
+from time import time
 
 CDF = [(1, 0.5), (2, 0.75), (3, 0.9), (4, 0.95), (5, 1)]
 MAX = 100
@@ -95,6 +96,12 @@ class NumberGenerator(object):
 			else:
 				return True
 
+	def _validate_filepath(self, path):
+		if not isinstance(path, str):
+			return False
+		else:
+			return True
+
 	def _round_random_number(self, n):
 		'''
 		Rounds n to the corresponding probility
@@ -141,3 +148,15 @@ class NumberGenerator(object):
 				return None, "Zero division error"
 		else:
 			return None, self.message
+
+	def save_last_generated_number(self, filepath="lastgeneratednumber.txt", mode="w"):
+		'''
+		Writes last generated number to a file.
+
+		:filepath Path of the file. Should be string.
+		'''
+		if not self._validate_filepath(filepath):
+			return False
+		with open(filepath, mode) as fout:
+			fout.write("%d,%f\n" % (self._queue[-1], time()))
+		return True
