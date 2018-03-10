@@ -29,6 +29,7 @@ python run.py -g <number_of_iterations_for_generator> -w <number_of_iterations_f
 * Both generators and writers can run concurrently.
 
 ##Configuration
+
 ###Parameters
 -g : Integer. Sets number of iterations for generator. If it is less than 1, then the program runs in an infinite loop. Default value is 0. 
 -w : Integer. Sets number of iterations for writer. If it is less than 1, then the program runs in an infinite loop. Default value is 0.
